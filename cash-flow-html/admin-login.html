@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Cash Flow Management</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="app-background">
+        <div class="login-container">
+            <div class="login-box">
+                <div class="text-center mb-4">
+                    <i class="fas fa-user-shield fa-3x text-danger mb-3"></i>
+                    <h2>Admin Login</h2>
+                    <p class="text-muted">Administrative access only</p>
+                </div>
+
+                <!-- Error Alert -->
+                <div id="errorAlert" class="alert alert-danger" style="display: none;" role="alert"></div>
+
+                <!-- Login Form -->
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">
+                            <i class="fas fa-user me-2"></i>Username
+                        </label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="username"
+                            placeholder="Enter admin username"
+                            required
+                        >
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-lock me-2"></i>Password
+                        </label>
+                        <input
+                            type="password"
+                            class="form-control"
+                            id="password"
+                            placeholder="Enter admin password"
+                            required
+                        >
+                    </div>
+
+                    <button type="submit" class="btn btn-danger w-100" id="loginBtn">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login as Admin
+                    </button>
+                </form>
+
+                <div class="text-center mt-3">
+                    <p class="mb-0">
+                        Employee?
+                        <a href="index.html">Login here</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Configuration and API -->
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+
+    <!-- Page Script -->
+    <script>
+        // Redirect to dashboard if already authenticated
+        redirectIfAuthenticated();
+
+        // Handle form submission
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+
+            // Validate inputs
+            if (!username || !password) {
+                showError('errorAlert', 'Please enter both username and password');
+                return;
+            }
+
+            // Disable button and show loading
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Logging in...';
+
+            // Attempt login
+            const result = await handleLogin(username, password, 'admin');
+
+            // Re-enable button
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Login as Admin';
+
+            // Show error if login failed
+            if (!result.success) {
+                showError('errorAlert', result.error || 'Login failed. Please try again.');
+            }
+        });
+    </script>
+</body>
+</html>
