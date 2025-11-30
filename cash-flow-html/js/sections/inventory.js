@@ -1,6 +1,7 @@
 // Inventory Section
 
 let inventoryList = [];
+let currentEditItemId = null; // <-- added to track edit mode
 
 function renderInventory() {
     return `
@@ -31,7 +32,7 @@ function renderInventory() {
             <!-- Add New Item Form -->
             <div class="tab-pane fade show active" id="newItem" role="tabpanel">
                 <div class="form-container">
-                    <h4>Add New Inventory Item</h4>
+                    <h4 id="inventoryFormTitle">Add New Inventory Item</h4>
                     <form id="inventoryForm">
                         <div class="mb-3">
                             <label class="form-label">Item Name</label>
@@ -57,8 +58,11 @@ function renderInventory() {
                             <label class="form-label">Description</label>
                             <textarea class="form-control" id="itemDescription" rows="2" placeholder="Optional description"></textarea>
                         </div>
-                        <button type="submit" class="btn btn-success">
+                        <button type="submit" id="inventorySubmitBtn" class="btn btn-success">
                             <i class="fas fa-plus me-2"></i>Add Item
+                        </button>
+                        <button type="button" id="inventoryCancelEditBtn" class="btn btn-secondary ms-2" style="display:none;">
+                            Cancel
                         </button>
                     </form>
                 </div>
@@ -131,6 +135,7 @@ function renderInventory() {
         </div>
     `;
 }
+// ...existing code...
 
 // Initialize inventory section
 async function initInventorySection() {
@@ -139,32 +144,74 @@ async function initInventorySection() {
         e.preventDefault();
         await handleInventorySubmit();
     });
+
+    // Cancel edit button
+    document.getElementById('inventoryCancelEditBtn').addEventListener('click', () => {
+        exitEditMode();
+    });
 }
 
 // Handle inventory form submission
 async function handleInventorySubmit() {
     try {
         const itemData = {
-            name: document.getElementById('itemName').value,
-            category: document.getElementById('itemCategory').value,
-            stock: parseInt(document.getElementById('itemStock').value),
+            name: document.getElementById('itemName').value.trim(),
+            category: document.getElementById('itemCategory').value.trim(),
+            stock: parseInt(document.getElementById('itemStock').value, 10),
             price: parseFloat(document.getElementById('itemPrice').value),
-            low_stock_alert: parseInt(document.getElementById('itemLowStock').value),
+            low_stock_alert: parseInt(document.getElementById('itemLowStock').value, 10),
             description: document.getElementById('itemDescription').value || null
         };
 
-        await apiService.createInventoryItem(itemData);
-        showSuccess('inventorySuccess', 'Item added successfully!');
+        if (!currentEditItemId) {
+            // Create new item
+            await apiService.createInventoryItem(itemData);
+            showSuccess('inventorySuccess', 'Item added successfully!');
+        } else {
+            // Update existing item
+            const id = currentEditItemId;
+            if (apiService.updateInventoryItem) {
+                // prefer apiService if available
+                await apiService.updateInventoryItem(id, itemData);
+            } else {
+                // fallback to direct fetch (PUT)
+                const res = await fetch(`/api/inventory/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(itemData)
+                });
+                if (!res.ok) {
+                    const errBody = await res.json().catch(() => ({}));
+                    throw new Error(errBody.error || errBody.message || `Update failed: ${res.status}`);
+                }
+            }
+
+            showSuccess('inventorySuccess', 'Item updated successfully!');
+        }
+
+        // Reset form and state
         document.getElementById('inventoryForm').reset();
+        exitEditMode();
 
         // Refresh inventory list if viewing it
         if (document.getElementById('inventoryStatus').classList.contains('show')) {
             await loadInventoryList();
         }
     } catch (error) {
-        console.error('Error adding item:', error);
-        showError('inventoryError', error.message || 'Failed to add item');
+        console.error('Error adding/updating item:', error);
+        showError('inventoryError', error.message || 'Failed to add/update item');
     }
+}
+
+// helper to exit edit mode and restore UI
+function exitEditMode() {
+    currentEditItemId = null;
+    document.getElementById('inventoryFormTitle').textContent = 'Add New Inventory Item';
+    const submitBtn = document.getElementById('inventorySubmitBtn');
+    submitBtn.classList.remove('btn-warning');
+    submitBtn.classList.add('btn-success');
+    submitBtn.innerHTML = '<i class="fas fa-plus me-2"></i>Add Item';
+    document.getElementById('inventoryCancelEditBtn').style.display = 'none';
 }
 
 // Load inventory list
@@ -245,12 +292,37 @@ function updateInventoryTable() {
     }).join('');
 }
 
-// Edit inventory item (placeholder - not fully implemented)
+// Edit inventory item (implemented)
 function editInventoryItem(itemId) {
     const item = inventoryList.find(i => i.id === itemId);
-    if (item) {
-        alert('Edit functionality: ' + item.name + '\n(Not fully implemented in this version)');
+    if (!item) {
+        showError('inventoryError', 'Item not found');
+        return;
     }
+
+    // populate form
+    document.getElementById('itemName').value = item.name;
+    document.getElementById('itemCategory').value = item.category;
+    document.getElementById('itemStock').value = item.stock;
+    document.getElementById('itemPrice').value = item.price;
+    document.getElementById('itemLowStock').value = item.low_stock_alert;
+    document.getElementById('itemDescription').value = item.description || '';
+
+    // set edit state
+    currentEditItemId = itemId;
+    document.getElementById('inventoryFormTitle').textContent = 'Edit Inventory Item';
+    const submitBtn = document.getElementById('inventorySubmitBtn');
+    submitBtn.classList.remove('btn-success');
+    submitBtn.classList.add('btn-warning');
+    submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Changes';
+    document.getElementById('inventoryCancelEditBtn').style.display = 'inline-block';
+
+    // switch to Add New Item tab so user can edit
+    const newItemTab = document.getElementById('new-item-tab');
+    if (newItemTab) newItemTab.click();
+
+    // focus first field
+    document.getElementById('itemName').focus();
 }
 
 // Load inventory when tab is shown
