@@ -123,6 +123,60 @@ class ApiService {
         });
         return this.handleResponse(response);
     }
+
+    // Get Sales Report
+    async getSalesReport(startDate, endDate) {
+        const response = await fetch(`${this.baseURL}/api/reports/sales?startDate=${startDate}&endDate=${endDate}`, {
+            method: 'GET',
+            headers: this.getAuthHeaders()
+        });
+        return this.handleResponse(response);
+    }
+
+    // Get Day Book Report
+    async getDayBookReport(startDate, endDate) {
+        const response = await fetch(`${this.baseURL}/api/reports/daybook?startDate=${startDate}&endDate=${endDate}`, {
+            method: 'GET',
+            headers: this.getAuthHeaders()
+        });
+        return this.handleResponse(response);
+    }
+
+    // Get Transactions Report
+    async getTransactionsReport(startDate, endDate, status = 'all') {
+        const response = await fetch(`${this.baseURL}/api/reports/transactions?startDate=${startDate}&endDate=${endDate}&status=${status}`, {
+            method: 'GET',
+            headers: this.getAuthHeaders()
+        });
+        return this.handleResponse(response);
+    }
+
+    // Get Profit & Loss Report
+    async getProfitLossReport(startDate, endDate) {
+        const response = await fetch(`${this.baseURL}/api/reports/profitloss?startDate=${startDate}&endDate=${endDate}`, {
+            method: 'GET',
+            headers: this.getAuthHeaders()
+        });
+        return this.handleResponse(response);
+    }
+
+    // Get Bank Statement
+    async getBankStatement(startDate, endDate) {
+        const response = await fetch(`${this.baseURL}/api/reports/bank?startDate=${startDate}&endDate=${endDate}`, {
+            method: 'GET',
+            headers: this.getAuthHeaders()
+        });
+        return this.handleResponse(response);
+    }
+
+    // Get Cash in Hand Statement
+    async getCashInHandStatement(startDate, endDate) {
+        const response = await fetch(`${this.baseURL}/api/reports/cash?startDate=${startDate}&endDate=${endDate}`, {
+            method: 'GET',
+            headers: this.getAuthHeaders()
+        });
+        return this.handleResponse(response);
+    }
 }
 
 // Create singleton instance

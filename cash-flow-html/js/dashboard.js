@@ -77,6 +77,9 @@ function loadSection(section) {
         case 'inventory':
             sectionHTML = renderInventory();
             break;
+        case 'reports':
+            sectionHTML = renderReports();
+            break;
         default:
             sectionHTML = '<h2>Section not found</h2>';
     }
@@ -103,6 +106,9 @@ function initSection(section) {
             break;
         case 'inventory':
             initInventorySection();
+            break;
+        case 'reports':
+            initReportsSection();
             break;
     }
 }
